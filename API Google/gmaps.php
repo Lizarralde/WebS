@@ -82,6 +82,7 @@
     <script type="text/javascript">
 		// Méthodes d'affichage de la map
 		var map;
+		var markers = [];
 
 		// Déclaration de la fenêtre d'informations
 		var infowindow = new google.maps.InfoWindow({ maxWidth : 300, maxHeight : 400 });
@@ -109,7 +110,7 @@
 				var earthquake = results.features[i];
 				var coords = earthquake.geometry.coordinates;
 				var latLng = new google.maps.LatLng(coords[1], coords[0]);
-				var marker = new google.maps.Marker({ position : latLng, map : map, icon : styleFeature(earthquake.properties.mag) });
+				var marker = new google.maps.Marker({ position : latLng, map : map, icon : styleFeature(earthquake.properties.mag), magnitude : earthquake.properties.mag, time : earthquake.time });
 
 				// Contenue de la fenêtre d'informations
 				var html = "<table>" +
@@ -121,6 +122,8 @@
 				"<tr><td><b>Infos:</b><td><a href=\"" + earthquake.properties.url + "\">" + earthquake.properties.url + "</a></td></tr>" +
 				"</table>";
 
+				markers.push(marker);
+				
 				google.maps.event.addListener(marker, 'click', openWindow(map, marker, html, earthquake, latLng));
 			}
 		}
@@ -224,10 +227,33 @@
 			}
 		}
 
+		function filter() {
+            var magnitudeMin = document.getElementById("magnitudeMin").value;
+            var magnitudeMax = document.getElementById("magnitudeMax").value;
+            var dateMin = Date.parse(document.getElementById("dateMin").valueAsDate);
+            var dateMax = Date.parse(document.getElementById("dateMax").valueAsDate);
+            for (var i = 0; i < markers.length; i++) {
+				console.log("Test");
+                if (markers[i].magnitude < magnitudeMin
+                    || markers[i].magnitude > magnitudeMax
+                    || markers[i].time < dateMin
+                    || markers[i].time > dateMax) {
+                    markers[i].setVisible(false);
+                } else {
+                    markers[i].setVisible(true);
+                }
+            }
+        }
+
 		google.maps.event.addDomListener(window, 'load', initialize);
     </script>
 </head>
 <body>
+	<input type="range" id="magnitudeMin" min="0" max ="10" step="0.01" value="0" onchange="filter()"/>
+	<input type="range" id="magnitudeMax" min="0" max ="10" step="0.01" value="10" onchange="filter()"/>
+	<input type="date" id="dateMin" placeholder="JJ/MM/AAAA" value="1970-01-01" onchange="filter()"/>
+	<input type="date" id="dateMax" placeholder="JJ/MM/AAAA" value="2970-01-01" onchange="filter()"/>
+
 	<!-- Le conteneur permettant d'afficher la map -->
 	<div id="map-canvas">
 	</div>
